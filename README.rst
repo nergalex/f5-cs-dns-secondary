@@ -27,17 +27,17 @@ Architecture
 
 Control Plane
 *********************
-- **Automation tool** -- Launch Dynamic DNS record update on Hidden DNS Master and then notify F5 to publish the updated zone
+- **Automation tool** -- Launch Dynamic DNS record update on Hidden DNS Master. If waiting for SOA "time to refresh" is too long then notify F5 to publish immediately the latest zone.
 - **Hidden DNS Master** -- Manage and store DNS Zones
-- **SaaS DNS** -- The notification (API call) initiates a zone transfer request from F5 to the authoritative DNS server that hosts the zone. The server responds with a zone transfer and the zone is loaded into the F5 DNS engine.
+- **SaaS DNS** -- When SOA "time to refresh" fires, or when a notification (API call) is sent, a SOA DNS request is sent. If SOA serial differs, then a zone transfer request is initiated from F5 to the authoritative DNS server that hosts the zone. The server responds with a zone transfer and the zone is loaded into the F5 DNS engine.
 
-Same workflow as `the example of loading a zone into DNS Express <https://techdocs.f5.com/en-us/bigip-15-1-0/big-ip-dns-services-implementations/configuring-dns-express.html>`_
+Similar workflow as `the example of loading a zone into DNS Express <https://techdocs.f5.com/en-us/bigip-15-1-0/big-ip-dns-services-implementations/configuring-dns-express.html>`_
 
 Data Plane
 *********************
 - **SaaS DNS** -- When the User's Local DNS sends a query for the zone, F5 DNS answers the query faster than the authoritative DNS server.
 
-Same workflow as `the example of DNS Express answering DNS queries <https://techdocs.f5.com/en-us/bigip-15-1-0/big-ip-dns-services-implementations/configuring-dns-express.html>`_
+Similar workflow as `the example of DNS Express answering DNS queries <https://techdocs.f5.com/en-us/bigip-15-1-0/big-ip-dns-services-implementations/configuring-dns-express.html>`_
 
 Product
 *********************
@@ -138,6 +138,7 @@ Extra variable                                  Description                     
 ``extra_admin_username``                        Admin user of jumphost                          ``PawnedAdmin``
 ``extra_cmp_ip``                                IP address of Ansible Tower                     ``1.1.1.1/32``
 ``extra_dns_record_zone``                       DNS zone                                        ``acme.dev``
+``extra_zone_time_to_refresh``                  Delay before sending a new SOA request          ``5M``
 ``extra_jumphost``                              properties of jumphost                          dict, see below
 ``extra_cs``                                    F5 Cloud Services credentials                   dict, see below
 ==============================================  =============================================   ================================================================================================================================================================================================================
@@ -183,8 +184,9 @@ Extra variable                                  Description                     
 ``extra_platform_name``                         name used for resource group, vNet...           ``csdnsdemo``
 ``extra_dns_record_zone``                       DNS zone / DNS domain                           Survey. Example:``acme.dev``
 ``extra_dns_record_name``                       DNS record name / hostname                      Survey. Example:``kibana``
-``extra_dns_record_type``                       DNS record type                                 Survey. Example:``[A, CNAME, MX, SRV, TXT]``
+``extra_dns_record_type``                       DNS record type                                 Survey. Choice in ``[A, CNAME, MX, SRV, TXT]``
 ``extra_dns_record_value``                      DNS record value                                Survey. Example:``2.2.2.2``
+``extra_dns_record_state``                      Desired state                                   Survey. Choice in ``[present, absent]``
 ``extra_jumphost``                              properties of jumphost                          dict, see below
 ``extra_cs``                                    F5 Cloud Services credentials                   dict, see below
 ==============================================  =============================================   ================================================================================================================================================================================================================
@@ -208,6 +210,10 @@ Test DNS resolution:
 
 :kbd:`dig acme.dev +trace`
 
+Show DNS zone specification:
+
+:kbd:`dig +multiline SOA acme.dev @ns1.f5cloudservices.com`
+
 Test Dynamic DNS update locally:
 
 .. code:: bash
@@ -229,6 +235,10 @@ Check named configuration:
 Check zone configuration:
 
 :kbd:`named-checkzone acme.dev /var/named/zone.acme.dev`
+
+View query logs:
+
+:kbd:`tail -f /var/named/data/query.log`
 
 Reference
 ==================================================

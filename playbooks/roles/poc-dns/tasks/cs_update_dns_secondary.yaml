@@ -1,6 +1,6 @@
 ---
-- name: CREATE or UPDATE record
-  community.general.nsupdate:
+- name: CREATE, UPDATE or DELETE record
+  nsupdate:
     # key_name: CMP_key
     # key_secret: "{{ extra_dns_key_secret }}"
     # key_algorithm: hmac-sha256
@@ -12,6 +12,7 @@
     ttl: 3600
     type: "{{ extra_dns_record_type }}"
     value: "{{ extra_dns_record_value }}"
+    state: "{{ extra_dns_record_state }}"
 
 - name: login - retrieve CS ACCESS_TOKEN + REFRESH_TOKEN
   uri:
@@ -62,6 +63,17 @@
   loop: "{{ cs_subscriptions.json.subscriptions }}"
   when: item.configuration.adns_service.zone == extra_dns_record_zone
 
+- name: SUSPEND DNS domain
+  uri:
+    url: "https://{{ extra_cs.hostname }}/{{ extra_cs.api_version }}/svc-subscription/subscriptions/{{ var_subscription_id }}/suspend"
+    method: POST
+    headers:
+      Authorization: "Bearer {{cs_login.json.access_token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  when: var_subscription_id != "none"
+
 - name: Activate Subscription
   uri:
     url: "https://{{ extra_cs.hostname }}/{{ extra_cs.api_version }}/svc-subscription/subscriptions/{{ var_subscription_id }}/activate"
@@ -73,7 +85,6 @@
     status_code: 200, 202
     validate_certs: false
   register: cs_activation
-  when: var_subscription_id != "none"
 
 - name: GET status
   uri:
