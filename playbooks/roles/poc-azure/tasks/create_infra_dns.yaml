@@ -1,0 +1,28 @@
+---
+- name: Create Resource Group
+  delegate_to: localhost
+  azure_rm_resourcegroup:
+    name: "rg-{{ extra_platform_name }}"
+    location: "{{ extra_location }}"
+    tags: "{{ extra_platform_tags }}  Name=rg-{{ extra_platform_name }} owner={{ owner }}"
+
+- name: Create Virtual Network
+  delegate_to: localhost
+  azure_rm_virtualnetwork:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "vnet-{{ extra_platform_name }}"
+    location: "{{ extra_location }}"
+    address_prefixes: "{{ extra_vnet_address_prefixes }}"
+    tags: "{{ extra_platform_tags }} Name=vnet-{{ extra_platform_name }} owner={{ owner }}"
+
+- name: Create Subnet Management
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-management"
+    address_prefix: "{{ extra_management_subnet_address_prefix }}"
+
+
+
+

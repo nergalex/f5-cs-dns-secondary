@@ -1,0 +1,19 @@
+{
+    "account_id": "{{ cs_account.json.primary_account_id }}",
+    "catalog_id": "c-aaxBJkfg8u",
+    "service_type": "adns",
+    "service_instance_name": "{{ extra_dns_record_zone }}",
+    "configuration": {
+        "adns_service": {
+            "remark": "CMP Ansible Tower",
+            "zone": "{{ extra_dns_record_zone }}",
+            "master_servers": [
+              "{{ stats_jumphost_ip }}"
+            ]
+        }
+    }
+}
+
+
+
+

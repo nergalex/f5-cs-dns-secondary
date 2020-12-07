@@ -1,0 +1,62 @@
+---
+- name: login - retrieve CS ACCESS_TOKEN + REFRESH_TOKEN
+  uri:
+    url: "https://{{ extra_cs.hostname }}/{{ extra_cs.api_version }}/svc-auth/login"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('template','cs_login.json') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_login
+
+- name: Account details - retrieve CS ACCOUNT_ID
+  uri:
+    url: "https://{{ extra_cs.hostname }}/{{ extra_cs.api_version }}/svc-account/user"
+    method: GET
+    headers:
+        Accept: application/json
+        Authorization: "Bearer {{cs_login.json.access_token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_account
+
+- name: GET DNS subscriptions
+  uri:
+    url: "https://{{ extra_cs.hostname }}/{{ extra_cs.api_version }}/svc-subscription/subscriptions?account_id={{ cs_account.json.primary_account_id }}&service_type=adns"
+    method: GET
+    headers:
+        Accept: application/json
+        Authorization: "Bearer {{cs_login.json.access_token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_subscriptions
+
+- name: SET var_subscription_id
+  set_fact:
+    var_subscription_id: "none"
+    var_current_configuration: "none"
+
+- name: SET var_subscription_id
+  set_fact:
+    var_subscription_id: "{{ item.subscription_id }}"
+    var_current_configuration: "{{ item.configuration }}"
+  loop: "{{ cs_subscriptions.json.subscriptions }}"
+  when: item.configuration.adns_service.zone == extra_dns_record_zone
+
+- name: DELETE DNS domain
+  uri:
+    url: "https://{{ extra_cs.hostname }}/{{ extra_cs.api_version }}/svc-subscription/subscriptions/{{ var_subscription_id }}/retire"
+    method: POST
+    headers:
+      Authorization: "Bearer {{cs_login.json.access_token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  when: var_subscription_id != "none"
+
+...

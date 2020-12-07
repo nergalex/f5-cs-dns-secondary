@@ -1,0 +1,107 @@
+---
+- name: login - retrieve CS ACCESS_TOKEN + REFRESH_TOKEN
+  uri:
+    url: "https://{{ extra_cs.hostname }}/{{ extra_cs.api_version }}/svc-auth/login"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('template','cs_login.json') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_login
+
+- name: Account details - retrieve CS ACCOUNT_ID
+  uri:
+    url: "https://{{ extra_cs.hostname }}/{{ extra_cs.api_version }}/svc-account/user"
+    method: GET
+    headers:
+        Accept: application/json
+        Authorization: "Bearer {{cs_login.json.access_token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_account
+
+- name: GET DNS subscriptions
+  uri:
+    url: "https://{{ extra_cs.hostname }}/{{ extra_cs.api_version }}/svc-subscription/subscriptions?account_id={{ cs_account.json.primary_account_id }}&service_type=adns"
+    method: GET
+    headers:
+        Accept: application/json
+        Authorization: "Bearer {{cs_login.json.access_token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_subscriptions
+
+- name: INIT var_subscription_id
+  set_fact:
+    var_subscription_id: "none"
+    var_current_configuration: "none"
+
+- name: SET var_subscription_id
+  set_fact:
+    var_subscription_id: "{{ item.subscription_id }}"
+    var_current_configuration: "{{ item.configuration }}"
+  loop: "{{ cs_subscriptions.json.subscriptions }}"
+  when: item.configuration.adns_service.zone == extra_dns_record_zone
+
+- name: CREATE DNS domain
+  uri:
+    url: "https://{{ extra_cs.hostname }}/{{ extra_cs.api_version }}/svc-subscription/subscriptions"
+    method: POST
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{cs_login.json.access_token}}"
+    body: "{{ lookup('template', 'cs_adns_create.json') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_subscription
+  when: var_subscription_id == "none"
+
+- name: INIT cs_subscription
+  set_fact:
+    var_subscription_id: "{{ cs_subscription.json.subscription_id }}"
+  when: cs_subscription.skipped is undefined
+
+- name: Activate Subscription
+  uri:
+    url: "https://{{ extra_cs.hostname }}/{{ extra_cs.api_version }}/svc-subscription/subscriptions/{{ var_subscription_id }}/activate"
+    method: POST
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ cs_login.json.access_token }}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_activation
+
+- name: GET status
+  uri:
+    url: "https://{{ extra_cs.hostname }}/{{ extra_cs.api_version }}/svc-subscription/subscriptions/{{ var_subscription_id }}/status"
+    method: GET
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ cs_login.json.access_token }}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_status
+  until: "cs_status.json.service_state == 'DEPLOYED'"
+  retries: 20
+  delay: 15
+
+- debug:
+    var: cs_status.json
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=subscription_id;value={{ var_subscription_id }};help=subscription_id;
+    "
+
+...
