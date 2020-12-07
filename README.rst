@@ -1,4 +1,4 @@
-Publish your DNS zones on F5 SaaS
+Publish DNS zones on F5 Cloud Services
 =======================================================================
 .. contents:: Table of Contents
 
@@ -11,8 +11,8 @@ Use Case
 - **Latency** -- Bring DNS service closest to your customers
 - **Automation** -- Automate use cases:
 
-A) **Deploy a DNS Zone** -- Publish a new DNS zone on SaaS DNS authoritative servers
-B) **Update a DNS record** -- Update DNS records
+A) **Deploy a DNS Zone** -- Publish a new DNS zone on F5 Cloud Services
+B) **Update a DNS record** -- Update DNS records and synchronize DNS zone with F5 Cloud Services
 
 Benefit
 ###############
