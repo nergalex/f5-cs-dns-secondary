@@ -12,7 +12,7 @@ Use Case
 - **Automation** -- Automate use cases:
 
 A) **Deploy a DNS Zone** -- Publish a new DNS zone on SaaS DNS authoritative servers
-B) **Update a DNS record** -- Update DNS records on a zone and then publish it
+B) **Update a DNS record** -- Update DNS records
 
 Benefit
 ###############
