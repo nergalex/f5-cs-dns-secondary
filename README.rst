@@ -238,7 +238,7 @@ Check zone configuration:
 
 View query logs:
 
-:kbd:`tail -f /var/named/data/query.log`
+:kbd:`tail -n 0 -f /var/named/data/query.log`
 
 Reference
 ==================================================
