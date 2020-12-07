@@ -54,7 +54,7 @@ A) Update a DNS record
 
 .. raw:: html
 
-    <a href="http://www.youtube.com/watch?v=2QuP4FQ1-EU"><img src="http://img.youtube.com/vi/2QuP4FQ1-EU/0.jpg" width="600" height="400" title="Deploy Ingress Controller" alt="Deploy Ingress Controller"></a>
+    <a href="http://www.youtube.com/watch?v=JjEIkbxV0rI"><img src="http://img.youtube.com/vi/JjEIkbxV0rI/0.jpg" width="600" height="400" title="F5 Cloud Services DNS Secondary" alt="Update a record and publish zone update"></a>
 
 Pre-requisites
 ==============
