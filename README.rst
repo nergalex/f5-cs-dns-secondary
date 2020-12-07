@@ -204,6 +204,10 @@ Extra variable                                  Description                     
 
 Troubleshoot
 ==================================================
+Test DNS resolution:
+
+:kbd:`dig acme.dev +trace`
+
 Test Dynamic DNS update locally:
 
 .. code:: bash
@@ -224,7 +228,7 @@ Check named configuration:
 
 Check zone configuration:
 
-:kbd:`named-checkzone f5app.dev /var/named/zone.f5app.dev`
+:kbd:`named-checkzone acme.dev /var/named/zone.acme.dev`
 
 Reference
 ==================================================
